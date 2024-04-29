@@ -1,6 +1,7 @@
 import pygame
 import random
 import os
+import math
 
 # Initialize Pygame
 pygame.init()
@@ -23,6 +24,7 @@ player_width, player_height = spaceship_img.get_size()
 player_x = screen_width // 2 - player_width // 2
 player_y = screen_height - player_height - 10
 player_speed = 5
+player_life = 3  # Initial life count
 
 # Set up the enemy
 enemy_width, enemy_height = alien_img.get_size()
@@ -36,11 +38,20 @@ bullet_height = 32
 bullet_speed = 7
 bullets = []
 
+# Set up alien bullets
+alien_bullet_width = 8
+alien_bullet_height = 32
+alien_bullet_speed = 5  # Adjusted bullet speed
+alien_bullets = []
+
+# Alien shooting variables
+alien_shoot_delay = 60  # Delay between alien shots (in frames)
+alien_shoot_timer = alien_shoot_delay  # Initial timer value
+
 # Set up the clock
 clock = pygame.time.Clock()
 
 # Set up game variables
-bullet_count = 0
 score = 0
 max_score_file = "max_score.txt"
 max_score = 0
@@ -54,6 +65,12 @@ def display_text(text, color, x, y):
     text_rect = text_surface.get_rect()
     text_rect.center = (x, y)
     screen.blit(text_surface, text_rect)
+
+# Function to display player's life as a bar
+def display_life_bar(life, max_life, x, y, width, height):
+    bar_length = (life / max_life) * width
+    pygame.draw.rect(screen, (0, 255, 0), (x, y, bar_length, height))
+    pygame.draw.rect(screen, (255, 0, 0), (x + bar_length, y, width - bar_length, height), 2)
 
 # Main menu
 def main_menu():
@@ -78,6 +95,19 @@ if os.path.exists(max_score_file):
     with open(max_score_file, "r") as file:
         max_score = int(file.read())
 
+# Function for the alien to shoot bullets
+def alien_shoot():
+    dx = player_x - enemy_x
+    dy = player_y - enemy_y
+    angle = math.atan2(dy, dx)
+    # Calculate velocity components based on angle
+    velocity_x = alien_bullet_speed * math.cos(angle)
+    velocity_y = alien_bullet_speed * math.sin(angle)
+    # Add bullet with calculated velocity
+    bullet_x = enemy_x + enemy_width // 2 - alien_bullet_width // 2
+    bullet_y = enemy_y + enemy_height // 2 - alien_bullet_height // 2
+    alien_bullets.append([bullet_x, bullet_y, velocity_x, velocity_y])
+
 # Main game loop
 running = True
 in_menu = True
@@ -88,13 +118,16 @@ while running:
 
         # Reset game variables
         score = 0
+        player_life = 3
         player_x = screen_width // 2 - player_width // 2
         enemy_x = random.randint(0, screen_width - enemy_width)
         enemy_y = random.randint(50, 200)
 
-        # Reset bullet count and bullets
-        bullet_count = 0
+        # Reset bullets
         bullets = []
+
+        # Reset alien bullets
+        alien_bullets = []
 
         # Reset game time
         start_time = pygame.time.get_ticks()
@@ -111,8 +144,8 @@ while running:
     elapsed_time = (pygame.time.get_ticks() - start_time) // 1000
     time_left = max(0, 60 - elapsed_time)
 
-    # End the game if time runs out
-    if time_left == 0:
+    # End the game if time runs out or player life reaches zero
+    if time_left == 0 or player_life <= 0:
         screen.fill((0, 0, 0))  # Clear the screen
         display_text("Game Over", (255, 255, 255), screen_width // 2, screen_height // 3)
         display_text(f"Final Score: {score}", (255, 255, 255), screen_width // 2, screen_height // 2)
@@ -151,7 +184,6 @@ while running:
             bullet_x = player_x + player_width // 2 - bullet_width // 2
             bullet_y = player_y
             bullets.append([bullet_x, bullet_y])
-            bullet_count += 1
 
     # Move and draw bullets
     for bullet in bullets:
@@ -159,9 +191,7 @@ while running:
         pygame.draw.rect(screen, (255, 255, 255), (bullet[0], bullet[1], bullet_width, bullet_height))
 
     # Check for collision between bullets and top edge of the screen
-    for bullet in bullets.copy():
-        if bullet[1] <= 0:
-            bullets.remove(bullet)
+    bullets = [bullet for bullet in bullets if bullet[1] > 0]
 
     # Check for collision between bullets and enemy
     for bullet in bullets:
@@ -171,12 +201,32 @@ while running:
             enemy_y = random.randint(50, 200)
             score += 1
 
+    # Alien shoots bullets at regular intervals
+    if alien_shoot_timer <= 0:
+        alien_shoot()
+        alien_shoot_timer = alien_shoot_delay
+    else:
+        alien_shoot_timer -= 1
+
+    # Move and draw alien bullets
+    for bullet in alien_bullets:
+        bullet[0] += bullet[2]  # Update bullet x position
+        bullet[1] += bullet[3]  # Update bullet y position
+        pygame.draw.rect(screen, (255, 0, 0), (bullet[0], bullet[1], alien_bullet_width, alien_bullet_height))
+
+    # Check for collision between alien bullets and player
+    for bullet in alien_bullets:
+        if (player_x < bullet[0] < player_x + player_width) and (player_y < bullet[1] < player_y + player_height):
+            player_life -= 1
+            alien_bullets.remove(bullet)
+
     # Update max score if needed
     max_score = max(max_score, score)
 
-    # Display score and time left
+    # Display score, time left, and player life
     display_text(f"Score: {score}", (255, 255, 255), 100, 20)
     display_text(f"Time Left: {time_left}", (255, 255, 255), screen_width - 100, 20)
+    display_life_bar(player_life, 3, screen_width // 2 - 50, 20, 100, 20)
 
     pygame.display.update()
     clock.tick(60)
