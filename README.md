@@ -1,6 +1,3 @@
-Sure, here's a simple README file for your Space Shooter game:
-
----
 
 # Space Shooter
 
