@@ -47,7 +47,3 @@ Space Shooter is a simple arcade-style game built using Python and the Pygame li
 - Spaceship and alien images: [Game Art 2D](https://www.gameart2d.com)
 - Font: [Google Fonts](https://fonts.google.com)
 
-## License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
