@@ -1,6 +1,3 @@
-Sure, here's a simple README file for your Space Shooter game:
-
----
 
 # Space Shooter
 
@@ -18,7 +15,7 @@ Space Shooter is a simple arcade-style game built using Python and the Pygame li
 1. Make sure you have Python installed on your system.
 2. Clone this repository to your local machine:
    ```
-   git clone https://github.com/your_username/space-shooter.git
+   git clone https://github.com/VineetKurapati/space-shooter.git
    ```
 3. Install Pygame using pip:
    ```
@@ -54,6 +51,3 @@ Space Shooter is a simple arcade-style game built using Python and the Pygame li
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
----
-
-Feel free to customize this README with additional information or sections specific to your project!
